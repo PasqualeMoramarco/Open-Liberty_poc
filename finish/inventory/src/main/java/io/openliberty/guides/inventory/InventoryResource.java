@@ -12,16 +12,19 @@
 // end::copyright[]
 package io.openliberty.guides.inventory;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
+import javax.sql.DataSource;
+import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -32,6 +35,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import io.openliberty.guides.inventory.dao.EventDao;
+import io.openliberty.guides.inventory.models.Event;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -50,11 +55,14 @@ public class InventoryResource {
 
     private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
     // tag::propertyNameEmitter[]
-    private FlowableEmitter<Message<String>> propertyNameEmitter;
+    private FlowableEmitter<Message<PropertyMessage>> propertyNameEmitter;
     // end::propertyNameEmitter[]
 
     @Inject
     private InventoryManager manager;
+
+    @Inject
+    private EventDao eventDAO;
     
     @GET
     @Path("/systems")
@@ -64,6 +72,7 @@ public class InventoryResource {
                 .values()
                 .stream()
                 .collect(Collectors.toList());
+        logger.warning("GetSystems1: " + systems);
         return Response
                 .status(Response.Status.OK)
                 .entity(systems)
@@ -76,11 +85,13 @@ public class InventoryResource {
     public Response getSystem(@PathParam("hostname") String hostname) {
         Optional<Properties> system = manager.getSystem(hostname);
         if (system.isPresent()) {
+            logger.warning("GetSystem2: " + hostname + " - " + system);
             return Response
                     .status(Response.Status.OK)
                     .entity(system)
                     .build();
         }
+        logger.warning("GetSystem3: " + hostname + " - " + system);
         return Response
                 .status(Response.Status.NOT_FOUND)
                 .entity("hostname does not exist.")
@@ -92,22 +103,31 @@ public class InventoryResource {
     @Path("/data")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
+    @Transactional
     /* This method sends a message and returns a CompletionStage that doesn't
         complete until the message is acknowledged. */
     // tag::USPHeader[]
     public CompletionStage<Response> updateSystemProperty(String propertyName) {
     // end::USPHeader[]
-        logger.info("updateSystemProperty: " + propertyName);
+        logger.warning("UpdateSystemProperty: " + propertyName);
         // First, create an incomplete CompletableFuture named "result".
         // tag::CompletableFuture[]
         CompletableFuture<Void> result = new CompletableFuture<>();
         // end::CompletableFuture[]
 
+        Event event = new Event(propertyName, true);
+        eventDAO.createEvent(event);
+        logger.warning("Event: " + event);
+
+        PropertyMessage propertyMessage = new PropertyMessage();
+        propertyMessage.id = event.getId();
+        propertyMessage.key = propertyName;
+
         // Create a message that holds the payload.
         // tag::message[]
-        Message<String> message = Message.of(
+        Message<PropertyMessage> message = Message.of(
                 // tag::payload[]
-                propertyName,
+                propertyMessage,
                 // end::payload[]
                 // tag::acknowledgeAction[]
                 () -> {
@@ -156,10 +176,11 @@ public class InventoryResource {
         String hostname = sl.hostname;
         if (manager.getSystem(hostname).isPresent()) {
             manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
+            manager.updateLocalTime(hostname);
+            logger.warning("Host " + hostname + " was updated: " + sl);
         } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
+            manager.addSystem(hostname, sl.loadAverage, sl.localDateTime);
+            logger.warning("Host " + hostname + " was added: " + sl);
         }
     }
     // end::updateStatus[]
@@ -167,16 +188,24 @@ public class InventoryResource {
     // tag::getPropertyMessage[]
     // tag::addSystemPropertyIncoming[]
     @Incoming("addSystemProperty")
+    @Transactional
     // end::addSystemPropertyIncoming[]
     public void getPropertyMessage(PropertyMessage pm)  {
-        logger.info("getPropertyMessage: " + pm);
-        String hostId = pm.hostname;
-        if (manager.getSystem(hostId).isPresent()) {
-            manager.updatePropertyMessage(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was updated: " + pm);
-        } else {
-            manager.addSystem(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was added: " + pm);
+        try {
+            logger.warning("GetPropertyMessage: " + pm);
+            Event event = new Event(pm.id, pm.hostname, pm.key, pm.value, true, true);
+            String hostId = pm.hostname;
+            eventDAO.updateEvent(event);
+            if (manager.getSystem(hostId).isPresent()) {
+                manager.updatePropertyMessage(hostId, pm.key, pm.value);
+                logger.warning("Host " + hostId + " was updated: " + pm);
+            } else {
+                manager.addSystem(hostId, pm.key, pm.value);
+                logger.warning("Host " + hostId + " was added: " + pm);
+            }
+        } catch (Exception e){
+            logger.warning("exception: " + e);
+            logger.warning("exception: " + e.getMessage());
         }
     }
     // end::getPropertyMessage[]
@@ -184,10 +213,11 @@ public class InventoryResource {
     // tag::sendPropertyName[]
     @Outgoing("requestSystemProperty")
     // tag::SPMHeader[]
-    public Publisher<Message<String>> sendPropertyName() {
+    public Publisher<Message<PropertyMessage>> sendPropertyName() {
     // end::SPMHeader[]
-        Flowable<Message<String>> flowable = Flowable.create(emitter ->
+        Flowable<Message<PropertyMessage>> flowable = Flowable.create(emitter ->
                 this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
+        logger.warning("SendPropertyName: " + flowable );
         return flowable;
     }
     // end::sendPropertyName[]

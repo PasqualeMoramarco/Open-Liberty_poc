@@ -12,15 +12,9 @@
 // end::copyright[]
 package io.openliberty.guides.system;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-
-import javax.enterprise.context.ApplicationScoped;
-
+import io.openliberty.guides.models.PropertyMessage;
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.Flowable;
 import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
@@ -29,9 +23,14 @@ import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
 import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
 import org.reactivestreams.Publisher;
 
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
+import javax.enterprise.context.ApplicationScoped;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class SystemService {
@@ -56,8 +55,11 @@ public class SystemService {
     @Outgoing("systemLoad")
     public Publisher<SystemLoad> sendSystemLoad() {
         return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                        osMean.getSystemLoadAverage())));
+                .map((interval -> new SystemLoad(
+                        getHostname(),
+                        osMean.getSystemLoadAverage(),
+                        LocalDateTime.now()
+                )));
     }
 
     // tag::sendProperty[]
@@ -68,19 +70,21 @@ public class SystemService {
     // end::ackAnnotation[]
     // tag::methodSignature[]
     public PublisherBuilder<Message<PropertyMessage>>
-    sendProperty(Message<String> propertyMessage) {
+    sendProperty(Message<PropertyMessage> propertyMessageKafka) {
     // end::methodSignature[]
         // tag::propertyValue[]
-        String propertyName = propertyMessage.getPayload();
+        logger.warning("Event: " + propertyMessageKafka.getPayload());
+        PropertyMessage propertyMessage = propertyMessageKafka.getPayload();
+        String propertyName = propertyMessage.key;
         String propertyValue = System.getProperty(propertyName, "unknown");
         // end::propertyValue[]
-        logger.info("sendProperty: " + propertyValue);
+        logger.warning("sendProperty: " + propertyValue);
         // tag::invalid[]
         if (propertyName == null || propertyName.isEmpty() || propertyValue == "unknown") {
             logger.warning("Provided property: " +
                     propertyName + " is not a system property");
             // tag::propertyMessageAck[]
-            propertyMessage.ack();
+            propertyMessageKafka.ack();
             // end::propertyMessageAck[]
             // tag::emptyReactiveStream[]
             return ReactiveStreams.empty();
@@ -88,12 +92,14 @@ public class SystemService {
         }
         // end::invalid[]
         // tag::returnMessage[]
+        propertyMessage.value = propertyValue;
+        propertyMessage.hostname = getHostname();
         Message<PropertyMessage> message = Message.of(
-                new PropertyMessage(getHostname(),
-                        propertyName,
-                        propertyValue),
-                propertyMessage::ack
+                propertyMessage,
+                propertyMessageKafka::ack
         );
+        logger.warning("Message payload: " + message.getPayload());
+
         return ReactiveStreams.of(message);
         // end::returnMessage[]
     }

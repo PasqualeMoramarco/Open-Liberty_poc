@@ -3,6 +3,9 @@ FROM openliberty/open-liberty:full-java11-openj9-ubi
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
 
+ENV POSTGRES_USER postgres
+ENV POSTGRES_PASSWORD docker
+
 LABEL \
   org.opencontainers.image.authors="My Name" \
   org.opencontainers.image.vendor="Open Liberty" \

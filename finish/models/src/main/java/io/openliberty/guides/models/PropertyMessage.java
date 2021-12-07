@@ -27,7 +27,15 @@ public class PropertyMessage {
     public String hostname;
     public String key;
     public String value;
-    
+    public int id;
+
+    public PropertyMessage(String hostname, String key, String value, int id) {
+        this.hostname = hostname;
+        this.key = key;
+        this.value = value;
+        this.id = id;
+    }
+
     public PropertyMessage(String hostname, String key, String value) {
         this.hostname = hostname;
         this.key = key;

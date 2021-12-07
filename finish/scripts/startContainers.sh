@@ -6,6 +6,18 @@ NETWORK=reactive-app
 docker network create $NETWORK
 
 docker run -d \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=docker \
+  -v postgresdata:/var/lib/postgresql/data \
+  -p 5432:5432 \
+  --network=$NETWORK \
+  --name=postgres \
+  --rm \
+  postgres &
+
+sleep 15
+
+docker run -d \
   -e ALLOW_ANONYMOUS_LOGIN=yes \
   --network=$NETWORK \
   --name=zookeeper \

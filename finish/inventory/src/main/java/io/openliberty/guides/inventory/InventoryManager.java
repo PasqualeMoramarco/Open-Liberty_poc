@@ -19,18 +19,24 @@ import java.util.Properties;
 import java.util.TreeMap;
 
 import javax.enterprise.context.ApplicationScoped;
+import java.time.LocalDateTime;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class InventoryManager {
 
     private Map<String, Properties> systems = Collections.synchronizedMap(new TreeMap<String, Properties>());
 
-    public void addSystem(String hostname, Double systemLoad) {
+    private static Logger logger = Logger.getLogger(InventoryManager.class.getName());
+
+    public void addSystem(String hostname, Double systemLoad, LocalDateTime localDateTime) {
         if (!systems.containsKey(hostname)) {
             Properties p = new Properties();
             p.put("hostname", hostname);
             p.put("systemLoad", systemLoad);
+            p.put("localDateTime", localDateTime);
             systems.put(hostname, p);
+            logger.warning("AddSystem1: " + hostname + " - " + systemLoad + " - " + localDateTime);
         }
     }
 
@@ -40,14 +46,27 @@ public class InventoryManager {
             p.put("hostname", hostname);
             p.put("key", value);
             systems.put(hostname, p);
+            logger.warning("AddSystem2: " + hostname + " - " + value);
         }
     }
 
     public void updateCpuStatus(String hostname, Double systemLoad) {
         Optional<Properties> p = getSystem(hostname);
         if (p.isPresent()) {
-            if (p.get().getProperty(hostname) == null && hostname != null)
+            if (p.get().getProperty(hostname) == null && hostname != null){
                 p.get().put("systemLoad", systemLoad);
+                logger.warning("UpdateCpuStatus: " + hostname + " - " + systemLoad);
+            }
+        }
+    }
+
+    public void updateLocalTime(String hostname) {
+        Optional<Properties> p = getSystem(hostname);
+        if (p.isPresent()) {
+            if (p.get().getProperty(hostname) == null && hostname != null){
+                p.get().put("localDateTime", LocalDateTime.now());
+                logger.warning("UpdateLocalTime: " + hostname + " - " + LocalDateTime.now());
+            }
         }
     }
 
@@ -56,12 +75,14 @@ public class InventoryManager {
         if (p.isPresent()) {
             if (p.get().getProperty(hostname) == null && hostname != null) {
                 p.get().put(key, value);
+                logger.warning("UpdatePropertyMessage: " + hostname + " - " + value);
             }
         }
     }
 
     public Optional<Properties> getSystem(String hostname) {
         Properties p = systems.get(hostname);
+        logger.warning("GetSystem: " + hostname);
         return Optional.ofNullable(p);
     }
 
