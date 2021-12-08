@@ -12,7 +12,6 @@
 // end::copyright[]
 package io.openliberty.guides.models;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 import javax.json.bind.Jsonb;
@@ -27,12 +26,10 @@ public class SystemLoad {
 
     public String hostname;
     public Double loadAverage;
-    public LocalDateTime localDateTime;
 
-    public SystemLoad(String hostname, Double loadAverage, LocalDateTime localDateTime) {
+    public SystemLoad(String hostname, Double loadAverage) {
         this.hostname = hostname;
         this.loadAverage = loadAverage;
-        this.localDateTime = localDateTime;
     }
 
     public SystemLoad() {
@@ -44,13 +41,12 @@ public class SystemLoad {
         if (!(o instanceof SystemLoad)) return false;
         SystemLoad sl = (SystemLoad) o;
         return Objects.equals(hostname, sl.hostname)
-                && Objects.equals(loadAverage, sl.loadAverage)
-                && Objects.equals(localDateTime, sl.localDateTime);
+                && Objects.equals(loadAverage, sl.loadAverage);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hostname, loadAverage, localDateTime);
+        return Objects.hash(hostname, loadAverage);
     }
     
     @Override

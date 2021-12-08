@@ -176,10 +176,9 @@ public class InventoryResource {
         String hostname = sl.hostname;
         if (manager.getSystem(hostname).isPresent()) {
             manager.updateCpuStatus(hostname, sl.loadAverage);
-            manager.updateLocalTime(hostname);
             logger.warning("Host " + hostname + " was updated: " + sl);
         } else {
-            manager.addSystem(hostname, sl.loadAverage, sl.localDateTime);
+            manager.addSystem(hostname, sl.loadAverage);
             logger.warning("Host " + hostname + " was added: " + sl);
         }
     }

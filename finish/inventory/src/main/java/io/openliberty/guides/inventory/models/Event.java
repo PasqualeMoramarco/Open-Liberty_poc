@@ -34,8 +34,10 @@ public class Event implements Serializable {
 
     @Column(name = "value")
     private String value;
+
     @Column(name = "sended")
     private boolean sended;
+
     @Column(name = "readed")
     private boolean readed;
 

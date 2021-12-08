@@ -28,7 +28,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -55,11 +54,8 @@ public class SystemService {
     @Outgoing("systemLoad")
     public Publisher<SystemLoad> sendSystemLoad() {
         return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(
-                        getHostname(),
-                        osMean.getSystemLoadAverage(),
-                        LocalDateTime.now()
-                )));
+                .map((interval -> new SystemLoad(getHostname(),
+                        osMean.getSystemLoadAverage())));
     }
 
     // tag::sendProperty[]
