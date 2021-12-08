@@ -43,7 +43,7 @@ You can get the current inventory of systems by accessing the `/systems` REST en
 
 ++++
 <p align="center">
-  <img width="460" height="300" src="https://github.com/PasqualeMoramarco/Open-Liberty_poc/blob/dev_olpoc/assets/open-liberty-POC-diagram.jpg">
+  <img src="https://github.com/PasqualeMoramarco/Open-Liberty_poc/blob/dev_olpoc/assets/open-liberty-POC-diagram.jpg" />
 </p>
 ++++
 
