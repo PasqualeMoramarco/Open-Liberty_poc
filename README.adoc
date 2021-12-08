@@ -25,7 +25,7 @@
 = Open-Liberty POC
 
 [.hidden]
-NOTE: This repository contains the guide documentation source. To view the guide in published form, view it on the https://openliberty.io/guides/{projectid}.html[Open Liberty website].   
+NOTE: This project is a POC to understand the potential of Open Liberty.The code is based on the Open Liberty lead projects, published here: https://github.com/OpenLiberty
 
 This project is a POC to understand the potential of Open Liberty.
 The code is based on the Open Liberty lead projects, published here: https://github.com/OpenLiberty
@@ -80,17 +80,6 @@ Next, use the provided script to start the application in Docker containers. The
 containers to communicate with each other. It also creates containers for Postgres, Kafka, Zookeeper, and the microservices
 in the project.
 
-include::{common-includes}/os-tabs.adoc[]
-
-[.tab_content.windows_section]
---
-[role='command']
-```
-.\scripts\startContainers.bat
-```
---
-
-[.tab_content.mac_section.linux_section]
 --
 [role='command']
 ```
@@ -234,14 +223,6 @@ Finally, run the following script to stop the application:
 
 include::{common-includes}/os-tabs.adoc[]
 
-[.tab_content.windows_section]
---
-[role='command']
-```
-.\scripts\stopContainers.bat
-```
---
-[.tab_content.mac_section.linux_section]
 --
 [role='command']
 ```
