@@ -228,8 +228,6 @@ in the database by inserting the property value and the read flag.
 
 Finally, run the following script to stop the application:
 
-include::{common-includes}/os-tabs.adoc[]
-
 --
 [role='command']
 ```
