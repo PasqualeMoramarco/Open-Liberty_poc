@@ -59,6 +59,7 @@ It is possible to observe the acknowledgment strategies that are available, in p
 You need to have Docker installed. For installation instructions, refer to the official
 https://docs.docker.com/get-docker/[Docker documentation^]. You will build and run the microservices in Docker containers.
 An installation of Apache Kafka is provided in another Docker container.
+An installation of Postgres is provided in another Docker container.
 
 == Building and running the application
 
