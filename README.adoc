@@ -41,6 +41,8 @@ microservice calculates and publishes events that contain its current average sy
 subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
 You can get the current inventory of systems by accessing the `/systems` REST endpoint.
 
+![](assets/reactive-messaging-system-inventory-rest.png)
+
 The application permit to subscribe a PUT request response. This PUT request response accepts a
 specific system property in the request body, queries that system property on the system microservice, and provides the response.
 The system handle receiving and sending events that are produced by the new endpoint. It also manages the saving of database data.
