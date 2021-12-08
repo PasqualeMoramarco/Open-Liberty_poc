@@ -12,13 +12,8 @@
 // end::copyright[]
 package io.openliberty.guides.inventory;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.TreeMap;
-
 import javax.enterprise.context.ApplicationScoped;
+import java.util.*;
 import java.util.logging.Logger;
 
 @ApplicationScoped
@@ -51,7 +46,7 @@ public class InventoryManager {
     public void updateCpuStatus(String hostname, Double systemLoad) {
         Optional<Properties> p = getSystem(hostname);
         if (p.isPresent()) {
-            if (p.get().getProperty(hostname) == null && hostname != null){
+            if (p.get().getProperty(hostname) == null && hostname != null) {
                 p.get().put("systemLoad", systemLoad);
                 logger.warning("UpdateCpuStatus: " + hostname + " - " + systemLoad);
             }

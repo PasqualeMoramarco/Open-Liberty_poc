@@ -12,41 +12,31 @@
 // end::copyright[]
 package io.openliberty.guides.inventory;
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.context.SessionScoped;
-import javax.inject.Inject;
-import javax.sql.DataSource;
-import javax.transaction.Transactional;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import io.openliberty.guides.inventory.dao.EventDao;
 import io.openliberty.guides.inventory.models.Event;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
-
 import io.openliberty.guides.models.PropertyMessage;
 import io.openliberty.guides.models.SystemLoad;
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableEmitter;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.reactivestreams.Publisher;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.transaction.Transactional;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 
 @ApplicationScoped
@@ -63,7 +53,7 @@ public class InventoryResource {
 
     @Inject
     private EventDao eventDAO;
-    
+
     @GET
     @Path("/systems")
     @Produces(MediaType.APPLICATION_JSON)
@@ -108,7 +98,7 @@ public class InventoryResource {
         complete until the message is acknowledged. */
     // tag::USPHeader[]
     public CompletionStage<Response> updateSystemProperty(String propertyName) {
-    // end::USPHeader[]
+        // end::USPHeader[]
         logger.warning("UpdateSystemProperty: " + propertyName);
         // First, create an incomplete CompletableFuture named "result".
         // tag::CompletableFuture[]
@@ -172,7 +162,7 @@ public class InventoryResource {
     // tag::systemLoadIncoming[]
     @Incoming("systemLoad")
     // end::systemLoadIncoming[]
-    public void updateStatus(SystemLoad sl)  {
+    public void updateStatus(SystemLoad sl) {
         String hostname = sl.hostname;
         if (manager.getSystem(hostname).isPresent()) {
             manager.updateCpuStatus(hostname, sl.loadAverage);
@@ -189,7 +179,7 @@ public class InventoryResource {
     @Incoming("addSystemProperty")
     @Transactional
     // end::addSystemPropertyIncoming[]
-    public void getPropertyMessage(PropertyMessage pm)  {
+    public void getPropertyMessage(PropertyMessage pm) {
         try {
             logger.warning("GetPropertyMessage: " + pm);
             Event event = new Event(pm.id, pm.hostname, pm.key, pm.value, true, true);
@@ -202,7 +192,7 @@ public class InventoryResource {
                 manager.addSystem(hostId, pm.key, pm.value);
                 logger.warning("Host " + hostId + " was added: " + pm);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             logger.warning("exception: " + e);
             logger.warning("exception: " + e.getMessage());
         }
@@ -213,10 +203,10 @@ public class InventoryResource {
     @Outgoing("requestSystemProperty")
     // tag::SPMHeader[]
     public Publisher<Message<PropertyMessage>> sendPropertyName() {
-    // end::SPMHeader[]
+        // end::SPMHeader[]
         Flowable<Message<PropertyMessage>> flowable = Flowable.create(emitter ->
                 this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
-        logger.warning("SendPropertyName: " + flowable );
+        logger.warning("SendPropertyName: " + flowable);
         return flowable;
     }
     // end::sendPropertyName[]

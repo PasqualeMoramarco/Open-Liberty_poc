@@ -33,10 +33,10 @@ import java.util.logging.Logger;
 
 @ApplicationScoped
 public class SystemService {
-    
+
     private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
-    private static final OperatingSystemMXBean osMean = 
+    private static final OperatingSystemMXBean osMean =
             ManagementFactory.getOperatingSystemMXBean();
     private static String hostname = null;
 
@@ -67,7 +67,7 @@ public class SystemService {
     // tag::methodSignature[]
     public PublisherBuilder<Message<PropertyMessage>>
     sendProperty(Message<PropertyMessage> propertyMessageKafka) {
-    // end::methodSignature[]
+        // end::methodSignature[]
         // tag::propertyValue[]
         logger.warning("Event: " + propertyMessageKafka.getPayload());
         PropertyMessage propertyMessage = propertyMessageKafka.getPayload();
